@@ -1,0 +1,19 @@
+#mainCanvas
+{
+    margin: auto;
+    display: block;
+
+    width: 512px;
+    height: 512px;
+
+    border: 1px;
+    border-color: black;
+    border-style: solid;
+
+    position: absolute;
+
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}

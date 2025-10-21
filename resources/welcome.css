@@ -1,0 +1,76 @@
+@font-face
+{
+    font-family: VastShadow;
+    src: url(VastShadow-Regular.ttf);
+}
+
+.noPad
+{
+    margin: 0;
+    pad: 0;
+}
+
+.topBar
+{
+    color: white;
+
+    width: 100vw;
+    height: 60px;
+
+    background-color: aquamarine;
+
+    font-family: VastShadow;
+    font-size: 40px;
+
+    display: grid;
+    place-items: center;
+
+    -webkit-text-stroke: 1px;
+    -webkit-text-stroke-color: black;
+}
+
+.buttonContainer
+{
+    display: grid;
+    place-items: center;
+}
+
+.styledButton
+{
+    background-color: orange;
+
+    outline-style: solid;
+    outline-width: 5px;
+    outline-color: wheat;
+
+    text-align: center;
+
+    border-radius: 30px;
+    border-style: none;
+
+    font-size: larger;
+
+    padding: 15px;
+
+    transition: 0.3s;
+
+    position: absolute;
+
+    transform: translate(0vw, 20vh);
+}
+
+.styledButton:hover
+{
+    background-color: rgb(255, 175, 45);
+
+    padding: 20px;
+
+    outline-width: 10px;    
+}
+
+.styledButton:active
+{
+    background-color: rgb(255, 140, 0);
+
+    outline-color: rgb(255, 175, 45);
+}
