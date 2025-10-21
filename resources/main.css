@@ -1,0 +1,12 @@
+.topBar
+{
+    width: 100vw;
+    height: 60px;
+
+    background-color: aquamarine;
+
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+
+    display: grid;
+    place-items: center;
+}
