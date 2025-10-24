@@ -53,6 +53,30 @@ class Vector2
         this.x /= this.magnitude;
         this.y /= this.magnitude;
     }
+
+    Add(other)
+    {
+        this.x += other.x;
+        this.y += other.y;
+    }
+
+    Subtract(other)
+    {
+        this.x -= other.x;
+        this.y -= other.y;
+    }
+
+    Multiply(other)
+    {
+        this.x *= other.x;
+        this.y *= other.y;
+    }
+
+    Divide(other)
+    {
+        this.x /= other.x;
+        this.y /= other.y;
+    }
 }   
 
 class Transform
@@ -75,8 +99,8 @@ class Transform
 
     Update()
     {
-        this.position.x += this.velocity.x;
-        this.position.y += this.velocity.y;
+        this.position.x += this.velocity.x * Application.Instance.deltaTime;
+        this.position.y += this.velocity.y * Application.Instance.deltaTime;
     }
 }
 
@@ -155,8 +179,8 @@ class Application
 
         this.ctx.imageSmoothingEnabled = false;
 
-        this.deltaTime;
-        this.lastTimestamp;
+        this.deltaTime = 0;
+        this.lastTimestamp = 0;
 
         this.mousePosition = Vector2.zero;
 
