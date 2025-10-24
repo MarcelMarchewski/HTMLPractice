@@ -119,6 +119,8 @@ function init()
     c = document.getElementById("mainCanvas");
     ctx = c.getContext("2d");
 
+    ctx.imageSmoothingQuality = "high";
+
     test = new Sprite(ctx, new Transform([0, 0], [0, 0], [0.01, 0.01]), "resources/dvdLogo.png");
     test.transform.vel[0] = RandomRange(xVelRange[0], xVelRange[1]);
     test.transform.vel[1] = RandomRange(yVelRange[0], yVelRange[1]);
