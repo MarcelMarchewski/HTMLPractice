@@ -8,16 +8,66 @@ class MenuScene extends Engine.Scene
     {
         super();
 
-        this.ball = new Engine.Sprite("resources/sprites/debug/ball_test.png", new Engine.Transform(undefined, undefined, new Engine.Vector2(5, 5)), new Engine.Animation(undefined, new Engine.Vector2(5, 2), 6, 3));
-        this.sprites.push(this.ball);
+        this.title = new Engine.Sprite("resources/sprites/demoGame/s_engineDemoTitle.png", new Engine.Transform(undefined, undefined, new Engine.Vector2(20, 20)), new Engine.Animation(new Engine.Vector2(128, 64), new Engine.Vector2(5, 2), 10, 5));
+        this.title.anim.playing = true;
+        this.sprites.push(this.title);
+
+        this.movedTitle = false;
+    }
+
+    Start()
+    {
+        super.Start();
+    }
+
+    Stop()
+    {
+        super.Stop();
+    }
+
+    OnKeyDown(_event)
+    {
+        super.OnKeyDown(_event);
+
+        Engine.Application.Instance.LoadScene(1);
+    }
+
+    OnKeyUp(_event)
+    {
+        super.OnKeyUp(_event);
     }
 
     Update()
     {
-        this.ball.transform.position.x = Engine.Application.Instance.mousePosition.x - this.ball.transform.scaledDimensions.x / 2;
-        this.ball.transform.position.y = Engine.Application.Instance.mousePosition.y - this.ball.transform.scaledDimensions.y / 2;
-
         super.Update();
+
+        if (!this.movedTitle && this.title.img.complete)
+        {
+            this.MoveTitle();
+            this.movedTitle = true;
+        }
+    }
+
+    Draw()
+    {
+        Engine.Application.Instance.ctx.fillStyle = "black";
+        Engine.Application.Instance.ctx.fillRect(0, 0, Engine.Application.Instance.c.width, Engine.Application.Instance.c.height);
+
+        super.Draw();
+    }
+
+    MoveTitle()
+    {
+        this.title.transform.position.x = Engine.Application.Instance.c.width / 2 - this.title.transform.scaledDimensions.x / 2;
+        this.title.transform.position.y = Engine.Application.Instance.c.height / 2 - this.title.transform.scaledDimensions.y;
+    }
+}
+
+class BlankScene extends Engine.Scene
+{
+    constructor()
+    {
+        super();
     }
 
     Draw()
@@ -32,5 +82,6 @@ class MenuScene extends Engine.Scene
 let a = new Engine.Application([640, 640], undefined, true);
 
 let s = new MenuScene();
+let s2 = new BlankScene();
 
 a.Start();

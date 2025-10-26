@@ -111,7 +111,7 @@ export class Transform
 
 export class Animation
 {
-    constructor(resolution=new Vector2(32, 32), columnRow=new Vector2.one, frameCount=1, speed=15)
+    constructor(resolution=new Vector2(32, 32), columnRow=Vector2.one, frameCount=1, speed=15)
     {
         this.resolution = resolution;
 
@@ -119,6 +119,8 @@ export class Animation
         this.frameCount = frameCount;
 
         this.speed = speed;
+
+        this.playing = false;
         
         this._frameArray = this.GenerateFrameArray();
         this._currentFrame = 0;
@@ -201,7 +203,7 @@ export class Sprite
     {
         this._lastDrawcall += Application.Instance.deltaTime;
 
-        if (this._lastDrawcall > this.anim.speed / 60)
+        if (this._lastDrawcall > this.anim.speed / Application.Instance.SPRITE_FRAMERATE && this.anim.playing)
         {
             this._lastDrawcall = 0;
 
@@ -224,6 +226,34 @@ export class Scene
         this.sprites = [];
 
         Application.Instance.RegisterScene(this);
+    }
+
+    static self = null;
+
+    Start()
+    {
+        document.addEventListener("keydown", this.OnKeyDown);
+        document.addEventListener("keyup", this.OnKeyUp);
+
+        self = Application.Instance.currentScene;
+    }
+
+    Stop()
+    {
+        document.removeEventListener("keydown", this.OnKeyDown);
+        document.removeEventListener("keyup", this.OnKeyUp);
+
+        self = null;
+    }
+
+    OnKeyDown(_event)
+    {
+        
+    }
+
+    OnKeyUp(_event)
+    {
+
     }
 
     Update()
@@ -276,11 +306,12 @@ export class Application
         this.fps = 0;
 
         this.SPRITE_PADDING = 1;
+        this.SPRITE_FRAMERATE = 60;
 
         this.mousePosition = Vector2.zero;
 
         this._scenes = [];
-        this._currentScene = null;
+        this.currentScene = null;
         this._animationFrameRequest = null;
     }
 
@@ -322,9 +353,9 @@ export class Application
         this.lastTimestamp = timestamp;
         this.fps = Math.round(1 / this.deltaTime);
 
-        if (this._currentScene != null)
+        if (this.currentScene != null)
         {
-            this._currentScene.Update();
+            this.currentScene.Update();
         }
 
         this.Draw();
@@ -332,9 +363,9 @@ export class Application
 
     Draw()
     {
-        if (this._currentScene != null)
+        if (this.currentScene != null)
         {
-            this._currentScene.Draw();
+            this.currentScene.Draw();
         }
 
         if (this.debug)
@@ -362,9 +393,27 @@ export class Application
     {
         this._scenes.push(_scene);
 
-        if (this._currentScene == null)
+        if (this.currentScene == null)
         {
-            this._currentScene = this._scenes[0];
+            this.currentScene = this._scenes[0];
+            this.currentScene.Start();
+        }
+    }
+
+    LoadScene(_scene)
+    {
+        if (this.currentScene == null)
+        {
+            this.currentScene = this._scenes[_scene];
+            this.currentScene.Start();
+        }
+
+        else
+        {
+            this.currentScene.Stop();
+            
+            this.currentScene = this._scenes[_scene];
+            this.currentScene.Start();
         }
     }
 }
