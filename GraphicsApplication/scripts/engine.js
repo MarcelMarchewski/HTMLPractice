@@ -1,11 +1,16 @@
 "use strict";
 
-class Vector2
+export class Vector2
 {
     constructor(x=0, y=0)
     {
         this.x = x;
         this.y = y;
+    }
+
+    static get negativeOne()
+    {
+        return new Vector2(-1, -1);
     }
 
     static get zero()
@@ -54,34 +59,34 @@ class Vector2
         this.y /= this.magnitude;
     }
 
-    Add(other)
+    Add(_other)
     {
-        this.x += other.x;
-        this.y += other.y;
+        this.x += _other.x;
+        this.y += _other.y;
     }
 
-    Subtract(other)
+    Subtract(_other)
     {
-        this.x -= other.x;
-        this.y -= other.y;
+        this.x -= _other.x;
+        this.y -= _other.y;
     }
 
-    Multiply(other)
+    Multiply(_other)
     {
-        this.x *= other.x;
-        this.y *= other.y;
+        this.x *= _other.x;
+        this.y *= _other.y;
     }
 
-    Divide(other)
+    Divide(_other)
     {
-        this.x /= other.x;
-        this.y /= other.y;
+        this.x /= _other.x;
+        this.y /= _other.y;
     }
 }   
 
-class Transform
+export class Transform
 {
-    constructor(position=Vector2.zero, rotation=Vector2.zero, scale=Vector2.one)
+    constructor(position=Vector2.zero, rotation=0, scale=Vector2.one)
     {
         this.position = position;
         this.rotation = rotation;
@@ -92,9 +97,9 @@ class Transform
         this.velocity = Vector2.zero;
     }
     
-    get trueDimensions()
+    get scaledDimensions()
     {
-        return new Vector2(this.dimensions.x * this.scale.x, this.dimensions.y * this.scale.y * 0.5);
+        return new Vector2(this.dimensions.x * this.scale.x, this.dimensions.y * this.scale.y);
     }
 
     Update()
@@ -104,9 +109,70 @@ class Transform
     }
 }
 
-class Sprite
+export class Animation
 {
-    constructor(path="resources/missingTexture.png", transform=new Transform())
+    constructor(resolution=new Vector2(32, 32), columnRow=new Vector2.one, frameCount=1, speed=15)
+    {
+        this.resolution = resolution;
+
+        this.columnRow = columnRow;
+        this.frameCount = frameCount;
+
+        this.speed = speed;
+        
+        this._frameArray = this.GenerateFrameArray();
+        this._currentFrame = 0;
+    }
+
+    GenerateFrameArray()
+    {
+        let tmp = [];
+
+        rowLoop:
+            for (let y = 0; y < this.columnRow.y; y++)
+            {
+                columnLoop:
+                    for (let x = 0; x < this.columnRow.x; x++)
+                    {
+                        tmp[tmp.length] = new Vector2(Math.round((this.resolution.x + Application.Instance.SPRITE_PADDING) * x), Math.round((this.resolution.y + Application.Instance.SPRITE_PADDING) * y));
+
+                        if (tmp.length == this.frameCount)
+                        {
+                            break rowLoop;
+                        }
+                    }
+            }
+
+        return tmp;
+    }
+
+    get nextFrame()
+    {
+        if (this._currentFrame < this.frameCount)
+        {
+            let frame = this._frameArray[this._currentFrame];
+
+            this._currentFrame++;
+
+            return frame;
+        }
+
+        else
+        {
+            this._currentFrame = 0;
+
+            let frame = this._frameArray[this._currentFrame];
+
+            this._currentFrame++;
+
+            return frame;
+        }
+    }
+}
+
+export class Sprite
+{
+    constructor(path="resources/sprites/engine/missingTexture.png", transform=new Transform(), anim=new Animation())
     {
         this.transform = transform;
 
@@ -118,6 +184,12 @@ class Sprite
         {
             this.transform.dimensions = new Vector2(this.img.width, this.img.height);
         }
+
+        this.anim = anim;
+
+        this._currentFrame = this.anim.nextFrame;
+
+        this._lastDrawcall = 0;
     }
 
     Update()
@@ -127,34 +199,53 @@ class Sprite
 
     Draw()
     {
+        this._lastDrawcall += Application.Instance.deltaTime;
+
+        if (this._lastDrawcall > this.anim.speed / 60)
+        {
+            this._lastDrawcall = 0;
+
+            this._currentFrame = this.anim.nextFrame;
+        }
+
         if (this.img.complete)
         {
-            Application.Instance.ctx.drawImage(this.img, this.transform.position.x, this.transform.position.y, this.transform.trueDimensions.x, this.transform.trueDimensions.y);
+            Application.Instance.ctx.rotate(this.transform.rotation);
+            Application.Instance.ctx.drawImage(this.img, this._currentFrame.x, this._currentFrame.y, this.anim.resolution.x, this.anim.resolution.y, this.transform.position.x, this.transform.position.y, this.transform.scaledDimensions.x, this.transform.scaledDimensions.y);
+            Application.Instance.ctx.setTransform(1, 0, 0, 1, 0, 0);
         }
     }
 }
 
-class Scene
+export class Scene
 {
     constructor()
     {
-        
+        this.sprites = [];
+
+        Application.Instance.RegisterScene(this);
     }
 
     Update()
     {
-        
+        for (let i = 0; i < this.sprites.length; i++)
+        {
+            this.sprites[i].Update();
+        }
     }
 
     Draw()
     {
-        
+        for (let i = 0; i < this.sprites.length; i++)
+        {
+            this.sprites[i].Draw();
+        }
     }
 }
 
-class Application
+export class Application
 {
-    constructor(wh, border="0px", background="none")
+    constructor(wh, background="none", debug=false)
     {
         if (Application.Instance)
         {
@@ -168,34 +259,38 @@ class Application
 
         this.c = document.getElementById("mainCanvas");
 
-        this.c.style.border = border;
-
-        this.c.style.width = wh[0];
-        this.c.style.height = wh[1];
+        this.c.width = wh[0];
+        this.c.height = wh[1];
 
         this.c.style.background = background;
+        this.c.style.border = "none";
 
         this.ctx = this.c.getContext("2d");
 
         this.ctx.imageSmoothingEnabled = false;
 
+        this.debug = debug
+
         this.deltaTime = 0;
         this.lastTimestamp = 0;
+        this.fps = 0;
+
+        this.SPRITE_PADDING = 1;
 
         this.mousePosition = Vector2.zero;
 
-        this.testSprite = new Sprite(undefined, new Transform(new Vector2(20, 20), Vector2.zero, new Vector2(10, 10)));
-
-        this.animationFrameRequest = null;
+        this._scenes = [];
+        this._currentScene = null;
+        this._animationFrameRequest = null;
     }
 
     static Instance;
 
     Start()
     {
-        if (!this.animationFrameRequest)
+        if (!this._animationFrameRequest)
         {
-            this.animationFrameRequest = window.requestAnimationFrame(this.Update.bind(this));
+            this._animationFrameRequest = window.requestAnimationFrame(this.Update.bind(this));
 
             this.c.addEventListener("mousemove", this.UpdateMouse);
             this.c.addEventListener("mouseenter", this.UpdateMouse);
@@ -205,47 +300,71 @@ class Application
 
     Stop()
     {
-        if (this.animationFrameRequest)
+        if (this._animationFrameRequest)
         {
-            window.cancelAnimationFrame(this.animationFrameRequest);
+            window.cancelAnimationFrame(this._animationFrameRequest);
 
             this.c.removeEventListener("mousemove");
             this.c.removeEventListener("mouseenter");
             this.c.removeEventListener("mouseleave");
 
-            this.animationFrameRequest = null;
+            this._animationFrameRequest = null;
         }
     }
 
     Update()
     {
-        this.animationFrameRequest = window.requestAnimationFrame(this.Update.bind(this));
+        this._animationFrameRequest = window.requestAnimationFrame(this.Update.bind(this));
 
         const timestamp = window.performance.now();
 
         this.deltaTime = (timestamp - this.lastTimestamp) / 1000;
         this.lastTimestamp = timestamp;
+        this.fps = Math.round(1 / this.deltaTime);
 
-        this.testSprite.Update();
+        if (this._currentScene != null)
+        {
+            this._currentScene.Update();
+        }
 
         this.Draw();
     }
 
     Draw()
     {
-        this.ctx.fillStyle = "black";
-        this.ctx.fillRect(0, 0, 300, 150);
+        if (this._currentScene != null)
+        {
+            this._currentScene.Draw();
+        }
 
-        this.testSprite.Draw();
+        if (this.debug)
+        {
+            this.DrawDebug();
+        }
     }
 
-    UpdateMouse(event)
+    DrawDebug()
     {
-        const bounds = Application.Instance.c.getBoundingClientRect();
+        this.ctx.font = "10px Arial";
+        this.ctx.fillStyle = "red";
+        this.ctx.fillText("FPS: " + this.fps, 5, 10);
+    }
 
-        Application.Instance.mousePosition.x = event.clientX - bounds.left;
-        Application.Instance.mousePosition.y = event.clientY - bounds.top;
+    UpdateMouse(_event)
+    {
+        const _bounds = Application.Instance.c.getBoundingClientRect();
+
+        Application.Instance.mousePosition.x = _event.clientX - _bounds.left;
+        Application.Instance.mousePosition.y = _event.clientY - _bounds.top;
+    }
+
+    RegisterScene(_scene)
+    {
+        this._scenes.push(_scene);
+
+        if (this._currentScene == null)
+        {
+            this._currentScene = this._scenes[0];
+        }
     }
 }
-
-export default Application;
