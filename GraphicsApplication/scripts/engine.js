@@ -45,18 +45,40 @@ export class Vector2
 
     get magnitude()
     {
-        return Math.sqrt(this.x * this.x, this.y * this.y);
+        return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 
     get normalised()
     {
-        return new Vector2(this.x / this.magnitude, this.y / this.magnitude);
+        let _tmp = new Vector2(this.x / this.magnitude, this.y / this.magnitude);
+
+        if (isNaN(_tmp.x))
+        {
+            _tmp.x = 0;
+        }
+
+        if (isNaN(_tmp.y))
+        {
+            _tmp.y = 0;
+        }
+
+        return _tmp;
     }
 
     Normalise()
     {
         this.x /= this.magnitude;
         this.y /= this.magnitude;
+
+        if (isNaN(this.x))
+        {
+            this.x = 0;
+        }
+
+        if (isNaN(this.y))
+        {
+            this.y = 0;
+        }
     }
 
     Add(_other)
@@ -100,12 +122,6 @@ export class Transform
     get scaledDimensions()
     {
         return new Vector2(this.dimensions.x * this.scale.x, this.dimensions.y * this.scale.y);
-    }
-
-    Update()
-    {
-        this.position.x += this.velocity.x * Application.Instance.deltaTime;
-        this.position.y += this.velocity.y * Application.Instance.deltaTime;
     }
 }
 
@@ -182,9 +198,16 @@ export class Sprite
         this.img = new Image(this.transform.scale.x, this.transform.scale.y);
         this.img.src = path;
 
+        this.onLoaded = null;
+
         this.img.onload = () =>
         {
             this.transform.dimensions = new Vector2(this.img.width, this.img.height);
+
+            if (this.onLoaded != null)
+            {
+                this.onLoaded();
+            }
         }
 
         this.anim = anim;
@@ -192,11 +215,6 @@ export class Sprite
         this._currentFrame = this.anim.nextFrame;
 
         this._lastDrawcall = 0;
-    }
-
-    Update()
-    {
-        this.transform.Update();
     }
 
     Draw()
@@ -212,8 +230,12 @@ export class Sprite
 
         if (this.img.complete)
         {
-            Application.Instance.ctx.rotate(this.transform.rotation);
+            Application.Instance.ctx.translate(this.transform.position.x + this.transform.scaledDimensions.x / 2, this.transform.position.y + this.transform.scaledDimensions.y / 2);
+            Application.Instance.ctx.rotate((this.transform.rotation * Math.PI) / 180);
+            Application.Instance.ctx.translate(-(this.transform.position.x + this.transform.scaledDimensions.x / 2), -(this.transform.position.y + this.transform.scaledDimensions.y / 2));
+
             Application.Instance.ctx.drawImage(this.img, this._currentFrame.x, this._currentFrame.y, this.anim.resolution.x, this.anim.resolution.y, this.transform.position.x, this.transform.position.y, this.transform.scaledDimensions.x, this.transform.scaledDimensions.y);
+            
             Application.Instance.ctx.setTransform(1, 0, 0, 1, 0, 0);
         }
     }
@@ -258,10 +280,7 @@ export class Scene
 
     Update()
     {
-        for (let i = 0; i < this.sprites.length; i++)
-        {
-            this.sprites[i].Update();
-        }
+        
     }
 
     Draw()
